@@ -19,13 +19,14 @@ def crawl_arxiv_qfin():
 
     for month in generate_months():
         print(f"Crawling {month}...")
-        url = f"{base_url}{month}"
+        url = f"{base_url}{month}?skip=0&show=2000" 
         response = requests.get(url)
         if response.status_code != 200:
             print(f"Failed to fetch {url}")
             continue
 
         soup = BeautifulSoup(response.text, "html.parser")
+        print(soup.find('div',{'class':"paging"}))
         dl = soup.find("dl", {"id": "articles"})
         if not dl:
             continue
@@ -47,7 +48,7 @@ def crawl_arxiv_qfin():
                 "month": month
             })
 
-        sleep(1)  # polite delay
+        sleep(1)  # polite delay - polite indeed
 
     return all_papers
 
