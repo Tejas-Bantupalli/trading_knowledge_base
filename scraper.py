@@ -1,58 +1,85 @@
-# scraper.py
+# scraper_async.py
+
 import json
-import time
-from helpers import extract_text_from_pdf, analyze_paper_with_gemini, safe_parse_json
+import os
+import asyncio
+from helpers import (
+    extract_text_from_pdf,
+    analyze_paper_with_ollama,  # NOW using Ollama
+    safe_parse_json
+)
 
+OUTPUT_FILE = "arxiv_analysis_final.jsonl"
+CONCURRENCY = 10
 
-def main():
-    with open("arxiv_qfin_index.json") as f:
-        papers = json.load(f)
-
-    results = []
+def load_processed_ids(output_path):
     processed_ids = set()
+    if os.path.exists(output_path):
+        with open(output_path, "r") as f:
+            for line in f:
+                try:
+                    entry = json.loads(line)
+                    processed_ids.add(entry["id"])
+                except json.JSONDecodeError:
+                    continue
+    return processed_ids
 
-    for paper in papers:
-        if paper["id"] in processed_ids:
-            continue
+def save_result_jsonl(output_path, entry):
+    with open(output_path, "a") as f:
+        f.write(json.dumps(entry) + "\n")
 
-        print(f"Processing paper ID: {paper['id']}")
+async def process_paper(paper, semaphore):
+    paper_id = paper["id"]
+    async with semaphore:
+        print(f"\n📄 Processing paper ID: {paper_id}")
         try:
             text = extract_text_from_pdf(paper["pdf_url"])
-            # Step 2: Analyze with Gemini
-            analysis_raw = analyze_paper_with_gemini(text)
-            analysis = safe_parse_json(analysis_raw)
+            if not text.strip():
+                print(f"⚠️ Skipping {paper_id} — empty text.")
+                return None
 
-            if "error" in analysis:
-                print(f"⚠️ Invalid JSON for {paper['id']}:")
-                print("🔸Raw:\n", analysis["raw_response"][:500])  # optional: limit output
-                continue
-                print(f"⚠️ Invalid JSON for {paper_id}:")
-                print("🔸Raw:\n", analysis["raw_response"][:500])  # optional: limit output
-                continue
+            print("🔍 Sending prompt to Ollama (phi3)...")
+            raw_response = await analyze_paper_with_ollama(text)
+            print("✅ Response received.")
 
+            parsed = safe_parse_json(raw_response)
+            if "error" in parsed:
+                print(f"⚠️ Invalid JSON for {paper_id}")
+                return None
 
-            results.append({
-                "id": paper["id"],
+            result = {
+                "id": paper_id,
                 "title": paper.get("title"),
-                "analysis": analysis,
+                "analysis": parsed,
                 "source_urls": {
                     "abs": paper.get("abs_url"),
                     "pdf": paper.get("pdf_url")
                 }
-            })
+            }
 
-            processed_ids.add(paper["id"])
+            save_result_jsonl(OUTPUT_FILE, result)
+            print(f"💾 Saved result for {paper_id}")
+            return result
 
         except Exception as e:
-            print(f"❌ Error processing {paper['id']}: {e}")
-            continue
+            print(f"❌ Error processing {paper_id}: {e}")
+            return None
 
-        time.sleep(1)  # optional throttle
+async def main_async():
+    with open("arxiv_qfin_index.json") as f:
+        papers = json.load(f)
 
-    with open("arxiv_analysis_final.json", "w") as out_f:
-        json.dump(results, out_f, indent=2)
+    processed_ids = load_processed_ids(OUTPUT_FILE)
+    to_process = [p for p in papers if p["id"] not in processed_ids]
 
-    print(f"\n✅ Saved {len(results)} papers to arxiv_analysis_final.json")
+    semaphore = asyncio.Semaphore(CONCURRENCY)
+    tasks = [process_paper(paper, semaphore) for paper in to_process]
+
+    await asyncio.gather(*tasks)
+
+def main():
+    asyncio.run(main_async())
+    print("\n🎉 All done!")
 
 if __name__ == "__main__":
     main()
