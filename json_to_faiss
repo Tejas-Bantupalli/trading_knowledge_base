@@ -1,0 +1,33 @@
+import json
+import numpy as np
+import faiss
+from sentence_transformers import SentenceTransformer
+from tqdm import tqdm
+
+MAPPING_FILE = 'arxiv_id_mapping.jsonl'
+INDEX_FILE = 'arxiv_faiss.index'
+EMBEDDING_MODEL = 'all-MiniLM-L6-v2'
+
+model = SentenceTransformer(EMBEDDING_MODEL)
+
+embeddings = []
+ids = []
+
+with open(MAPPING_FILE, 'r') as f:
+    for line in tqdm(f, desc="Reading abstracts"):
+        obj = json.loads(line)
+        abstract = obj['abstract']
+        arxiv_id = obj['id']
+        emb = model.encode(abstract)
+        embeddings.append(emb)
+        ids.append(arxiv_id)
+
+if embeddings:
+    embeddings = np.array(embeddings).astype('float32')
+    dim = embeddings.shape[1]
+    index = faiss.IndexFlatL2(dim)
+    index.add(embeddings)
+    faiss.write_index(index, INDEX_FILE)
+    print(f"Indexed {len(embeddings)} papers.")
+else:
+    print("No embeddings to index.")
