@@ -9,8 +9,9 @@ import faiss
 import os
 
 # ========= Gemini API Key Setup =========
-os.environ["GOOGLE_API_KEY"] = "AIzaSyA1XsDHyHjIyA9dcE3YRfa23g6PnN5UyFk"
-genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+
+api_key = os.getenv("GOOGLE_API_KEY")
+genai.configure(api_key=api_key)
 
 # ======== Device Selection =========
 if torch.backends.mps.is_available():
