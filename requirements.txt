@@ -2,3 +2,6 @@ requests
 google.generativeai
 fitz
 bs4
+sentence-transformers
+faiss-cpu
+tqdm
