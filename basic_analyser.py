@@ -7,8 +7,11 @@ from sentence_transformers import SentenceTransformer
 import json
 import faiss
 import os
+import dotenv
+import time
 
 # ========= Gemini API Key Setup =========
+dotenv.load_dotenv()
 
 api_key = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=api_key)
@@ -102,17 +105,26 @@ USER QUESTION: {user_query}
 ANSWER:"""
 
 # ======== Run Query and Generate Gemini Response =========
-query = "How are LLMs used in finance"
-query_embedding = embedding_model.encode([query]).astype('float32')
-all_papers = get_paper_transcript(query_embedding)
 
-prompt = RAG_PROMPT_TEMPLATE.format(
+def initial_query(query):
+    start = time.time()
+    query_embedding = embedding_model.encode([query]).astype('float32')
+    end = time.time()
+    print(f"Query embedding time: {end - start:.2f} seconds")
+    print('embedded query to find relevant papers...')
+    start = time.time()
+    all_papers = get_paper_transcript(query_embedding)
+    end = time.time()
+    print(f"Paper retrieval time: {end - start:.2f} seconds")
+    print('retrieved relevant papers...')
+    prompt = RAG_PROMPT_TEMPLATE.format(
     retrieved_papers_content=all_papers,
     user_query=query
 )
 
-# Call Gemini Flash
-model = genai.GenerativeModel(model_name="gemini-2.5-flash")
-response = model.generate_content(prompt)
-
-print(response.text)
+    # Call Gemini Flash
+    print('analysing...')
+    model = genai.GenerativeModel(model_name="gemini-2.5-flash")
+    response = model.generate_content(prompt,stream=True)
+    for chunk in response:
+        print(chunk.text, end='')
