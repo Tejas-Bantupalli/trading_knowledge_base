@@ -106,6 +106,31 @@ USER QUESTION: {user_query}
 
 ANSWER:"""
 
+SINGLE_PAPER_REVIEW = """SYSTEM: You are an expert academic research assistant specializing in Quantitative Finance. 
+Your goal is breakdown the provided research paper into 
+    1. Introduction,
+    2. Methodology,
+    3. Literature Review,
+    4. Results,
+    5. Discussion,
+    6. Conclusion. 
+    Base your answers *strictly* on the provided research paper excerpts. Do not use external knowledge or invent information. 
+    Look for relevance to the initial user query. This will be the final point in your analysis:
+    7. Relevance
+    If the answer cannot be found in the provided context, clearly state that you do not have enough information from the given papers.
+
+CONTEXT:
+{paper_content}
+Present your findings in the following structured format:
+1. Introduction: A concise overview of the answer derived from the paper.
+2. Methodology: A concise overview of the answer derived from the paper.
+3. Literature Review: A concise overview of the answer derived from the paper.
+4. Results: A concise overview of the answer derived from the paper.
+5. Discussion: A concise overview of the answer derived from the paper.
+6. Conclusion: A concise overview of the answer derived from the paper.
+
+"""
+
 # ======== Run Query and Generate Gemini Response =========
 
 def initial_query(query):
