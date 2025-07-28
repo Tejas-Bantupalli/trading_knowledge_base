@@ -99,7 +99,9 @@ Present your findings in the following structured format:
 1.  **Summary:** A concise overview of the answer derived from the papers.
 2.  **Key Insights:** A bulleted list of significant findings or contributions. For each insight, cite the source paper(s) using their exact [ARXIV_ID] as found in the context.
 3.  **Limitations/Future Work:** Identify any limitations of the research or directions for future work explicitly mentioned in the provided papers, if relevant to the query.
-
+The above 3 are mandatory and separate from the rest of the response.
+4.  **Paper Summaries:** Create a concise 1-line summary for each paper presented in the context.
+5.  **User Query:** Query if the user wants to explore a specific paper in detail.
 USER QUESTION: {user_query}
 
 ANSWER:"""
