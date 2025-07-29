@@ -1,0 +1,154 @@
+# --- Research Orchestrator Tasks ---
+initial_query_interpretation:
+  description: >
+    Interpret the user's initial query related to quantitative finance and
+    translate it into a clear, actionable plan for the crew. This plan should include
+    keywords for paper retrieval, identify the core focus of the research,
+    and outline potential follow-up steps.
+  expected_output: >
+    A structured plan in markdown format, detailing:
+    1. The refined research question.
+    2. A list of 5-7 precise keywords for paper retrieval.
+    3. Initial hypothesis or scope.
+    4. Suggested next steps (e.g., "Delegate to Paper Retrieval Agent").
+  agent: research_orchestrator # This task is assigned to the orchestrator
+
+delegate_research_subtask:
+  description: >
+    Based on the overall research plan and ongoing user interaction,
+    delegate a specific sub-task to the appropriate specialized agent.
+    This could be finding papers, summarizing, answering a specific query,
+    or requesting a review from the critic.
+  expected_output: >
+    A clear instruction to another agent for a specific task, including all
+    necessary context and parameters for that agent to execute its work.
+    For example: "Task Paper Retrieval Agent: Find papers on 'risk parity, portfolio optimization'."
+    Or: "Task Summarization Agent: Summarize paper XYZ focusing on 'volatility modeling'."
+  agent: research_orchestrator
+  # This task is highly dynamic and its context/output depend on the orchestrator's decision.
+  # It might not be directly "run" but rather its concept guides the orchestrator's behavior.
+
+aggregate_and_respond_to_user:
+  description: >
+    Receive and synthesize outputs from other agents, present them to the user,
+    and manage the conversational flow. Decide if further probing is needed,
+    if additional research (single paper, multiple, web search) is required,
+    or if the current research phase is complete.
+  expected_output: >
+    A clear, concise response to the user based on aggregated findings,
+    along with a prompt for further interaction or confirmation of completion.
+  agent: research_orchestrator
+  # This task will take context from outputs of other agents.
+
+trigger_final_report_and_kg:
+  description: >
+    The user has signaled completion of the current research objective.
+    Aggregate all relevant findings, generate the comprehensive `findings.md` report,
+    and trigger the creation of the knowledge graph based on the entire research context.
+  expected_output: >
+    A markdown file named 'findings.md' containing a complete report of the research,
+    and a confirmation message that the knowledge graph generation has been initiated.
+  agent: research_orchestrator
+  output_file: findings.md
+
+
+# --- Paper Retrieval Agent Tasks ---                                                           # change this - doesn't fit our needs.
+find_relevant_papers:
+  description: >
+    Efficiently locate and retrieve the top N (e.g., 5-10) most relevant
+    academic papers from the vector database based on the provided keywords.
+    For each paper, retrieve its full text (or relevant sections) and structured metadata
+    (ArXiv ID, title, authors, abstract, URL).
+    Keywords: {keywords}
+  expected_output: >
+    A JSON array of objects, where each object represents a paper and contains:
+    - 'arxiv_id': string
+    - 'title': string
+    - 'authors': list of strings
+    - 'abstract': string
+    - 'url': string
+    - 'full_text': string (or relevant chunks)
+  agent: paper_retrieval_agent
+
+
+# --- Summarization Agent Tasks ---
+summarize_single_paper:                                                                  
+  description: >
+    Read the provided full text of a single research paper and generate a
+    concise summary (e.g., 200-300 words). The summary should highlight
+    key methods, findings, and conclusions, specifically tailored to the
+    overarching research context and the current user query: {query_context}.
+    Paper title: {paper_title}
+  expected_output: >
+    A coherent, self-contained summary of the paper in plain text,
+    focusing on its relevance to the provided query context.
+  agent: summarization_agent
+  # Context for this task will include 'paper_content' and 'query_context'
+  # from the orchestrator or previous tasks.
+
+summarize_multiple_papers:
+  description: >
+    Read the provided full texts of multiple research papers and generate
+    a consolidated summary that identifies common themes, contrasting viewpoints,
+    and significant findings across all papers relevant to the query: {query_context}.
+  expected_output: >
+    A consolidated summary that integrates insights from multiple papers,
+    highlighting key findings, methodologies, and relationships between them,
+    relevant to the research question.
+  agent: summarization_agent
+  # Context will be a list of paper contents and the query.
+
+
+# --- Query Answering Agent Tasks ---
+answer_query_from_paper:
+  description: >
+    Perform a localized RAG search within the provided text content of a specific paper
+    to accurately extract and synthesize information that directly answers the user's
+    specific query: {user_sub_query}.
+    Ensure the answer is factually supported by the provided text and concise.
+  expected_output: >
+    A direct and concise answer to the user's query, explicitly citing the relevant
+    sections or arguments from the provided paper content.
+  agent: query_answering_agent
+  # Context for this task will include 'paper_content' and 'user_sub_query'.
+
+# --- Critic Agent Tasks ---
+review_generated_summary:
+  description: >
+    Review the generated summary for accuracy, completeness, and adherence to the
+    original paper's content and the user's query context.
+    - Check for factual consistency with the `original_paper_content`.
+    - Assess if all key findings relevant to `{query_context}` are included.
+    - Identify any signs of hallucination or fabrication.
+  expected_output: >
+    A verdict (e.g., "Approved", "Needs Revision", "Flagged for Hallucination")
+    followed by detailed, actionable feedback if revision or flagging is needed.
+    Example: "Needs Revision: Missing explanation of the Black-Scholes model assumptions."
+  agent: critic_agent
+  # Context will include: `summary_to_review`, `original_paper_content`, `query_context`.
+
+review_generated_answer:
+  description: >
+    Review the generated answer to the user's query for factual consistency,
+    completeness, and direct sourcing from the `source_paper_content`.
+    - Verify that the answer is directly supported by the `source_paper_content`.
+    - Determine if the answer fully addresses the `user_sub_query` or if more information is required.
+    - Flag any inconsistencies or unsupported claims.
+  expected_output: >
+    A verdict (e.g., "Approved", "Needs Revision", "Flagged for Hallucination", "Incomplete/Requires More Data")
+    followed by detailed feedback explaining the reason for the verdict.
+  agent: critic_agent
+  # Context will include: `answer_to_review`, `source_paper_content`, `user_sub_query`.
+
+evaluate_overall_research_progress:
+  description: >
+    Evaluate the overall progress and adherence of the research crew to the
+    initial user query and overarching research goal. Assess if the current
+    findings are sufficient or if additional steps (e.g., more papers, web search)
+    are warranted to comprehensively address the user's needs.
+  expected_output: >
+    A strategic assessment of the research status, including recommendations
+    for next steps (e.g., "Proceed to final report", "Initiate web search for X",
+    "Request more specific input from user").
+  agent: critic_agent
+  # Context will be the current aggregated state of research and conversational history.
