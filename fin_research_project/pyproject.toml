@@ -21,6 +21,8 @@ run_crew = "fin_research_project.main:run"
 train = "fin_research_project.main:train"
 replay = "fin_research_project.main:replay"
 test = "fin_research_project.main:test"
+quantitative_research = "fin_research_project.quantitative_main:main"
+run_quantitative = "fin_research_project.quantitative_main:run_quantitative_research"
 
 [build-system]
 requires = ["hatchling"]
