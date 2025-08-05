@@ -50,7 +50,7 @@ class ArxivRetrievalTool(BaseTool):
                 "arxiv_id": clean_id,
                 "pdf_url": pdf_url,
                 "text_length": len(text_content),
-                "content": text_content[:50000]  # Limit content length for tool output
+                "content": text_content  
             }
             
             return json.dumps(result, indent=2)
