@@ -256,5 +256,5 @@ class LTM:
         self.r.set('hello','world')
         print(self.r.get('hello'))
 if __name__=="__main__":
-    test = ltm()
+    test = LTM()
     test.test()
