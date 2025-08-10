@@ -37,7 +37,7 @@ class CriticTool(BaseTool):
                 prompt = self._create_summary_review_prompt(content_to_review, original_papers, user_query)
             elif review_type == "answer":
                 prompt = self._create_answer_review_prompt(content_to_review, original_papers, user_query)
-            else:
+            else: # general review
                 prompt = self._create_general_review_prompt(content_to_review, original_papers, user_query)
 
             # Generate review using Gemini
@@ -66,7 +66,7 @@ TASK: Review a paper summary for accuracy, completeness, and relevance to the us
 USER QUERY: {user_query}
 
 ORIGINAL PAPER CONTENT:
-{original_papers[:30000]}
+{original_papers}
 
 GENERATED SUMMARY:
 {summary}
@@ -109,7 +109,7 @@ TASK: Review a query answer for factual consistency, completeness, and proper so
 USER QUERY: {user_query}
 
 ORIGINAL PAPER CONTENT:
-{original_papers[:30000]}
+{original_papers}
 
 GENERATED ANSWER:
 {answer}
@@ -152,7 +152,7 @@ TASK: General review of content for quality, accuracy, and relevance.
 USER QUERY: {user_query}
 
 ORIGINAL PAPER CONTENT:
-{original_papers[:30000]}
+{original_papers}
 
 CONTENT TO REVIEW:
 {content}
