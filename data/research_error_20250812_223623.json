@@ -1,0 +1,7 @@
+{
+  "user_query": "test query",
+  "start_time": "2025-08-12T22:36:23.404886",
+  "output_dir": "data",
+  "error": "Research workflow failed: litellm.AuthenticationError: AuthenticationError: OpenAIException - The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable",
+  "end_time": "2025-08-12T22:36:23.480046"
+}

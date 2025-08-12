@@ -1,0 +1,80 @@
+# Trading Knowledge Base System Configuration
+
+# System Settings
+system:
+  name: "Trading Knowledge Base"
+  version: "1.0.0"
+  data_directory: "data"
+  enable_memory: true
+  log_level: "INFO"
+
+# Memory Configuration
+memory:
+  stm:
+    max_entries: 10
+    ttl_seconds: 300
+  
+  ltm:
+    postgres:
+      host: "localhost"
+      port: 5432
+      database: "postgres"
+      user: "postgres"
+      password: "postgres"
+      connection_string: null  # Override individual settings if provided
+    
+    redis:
+      host: "localhost"
+      port: 6379
+      database: 0
+      decode_responses: true
+
+# Research Configuration
+research:
+  default_output_dir: "data"
+  max_papers_per_query: 5
+  similarity_threshold: 0.8
+  enable_quality_review: true
+  
+  agents:
+    research_orchestrator:
+      verbose: true
+      allow_delegation: true
+    
+    paper_retrieval_agent:
+      verbose: true
+    
+    summarization_agent:
+      verbose: true
+    
+    query_answering_agent:
+      verbose: true
+    
+    critic_agent:
+      verbose: true
+
+# Output Configuration
+output:
+  findings_format: "markdown"
+  knowledge_graph_format: "json"
+  include_metadata: true
+  save_session_data: true
+
+# Vector Search Configuration
+vector_search:
+  model: "sentence-transformers/all-MiniLM-L6-v2"
+  index_type: "faiss"
+  similarity_metric: "cosine"
+  max_results: 10
+
+# API Configuration
+api:
+  google_generative_ai:
+    model: "gemini-pro"
+    temperature: 0.1
+    max_tokens: 2048
+  
+  crewai:
+    process: "sequential"
+    verbose: true
+    memory: true
